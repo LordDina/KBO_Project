@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBO CRUD - Gestion d'Entreprises</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button.secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        button.secondary:hover {
+            background: #5a6268;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.danger:hover {
+            background: #c82333;
+        }
+
+        .list-container {
+            grid-column: 1 / -1;
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .list-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .list-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .list-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        .list-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6539a0 100%);
+        }
+
+        .search-filter {
+            margin-bottom: 15px;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 10px 0;
+            z-index: 10;
+        }
+
+        .search-filter input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-filter input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .item h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .item p {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .item-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #e7f3ff;
+            color: #0066cc;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.inactive {
+            background: #ffe7e7;
+            color: #cc0000;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            font-weight: 600;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .list-container {
+                grid-column: 1;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: auto;
+            padding: 0;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .code-example {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #333;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏢 KBO CRUD - Gestion d'Entreprises</h1>
+            <p class="subtitle">Gérez vos entreprises et leurs succursales facilement</p>
+        </header>
+
+        <div id="alertContainer"></div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="totalEntreprises">0</div>
+                <div class="stat-label">Entreprises</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="totalUnites">0</div>
+                <div class="stat-label">Unités d'établissement</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="apiStatus">✓</div>
+                <div class="stat-label">API Status</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Formulaire Entreprises -->
+            <div class="card">
+                <h2>Créer une Entreprise</h2>
+                <form id="formEntreprise">
+                    <div class="form-group">
+                        <label for="idEntreprise">ID Entreprise *</label>
+                        <input type="text" id="idEntreprise" required placeholder="ENT001">
+                    </div>
+                    <div class="form-group">
+                        <label for="nomEntreprise">Nom Entreprise *</label>
+                        <input type="text" id="nomEntreprise" required placeholder="TechBelgium SARL">
+                    </div>
+                    <div class="form-group">
+                        <label for="idActivite">Code Activité NACE *</label>
+                        <select id="idActivite" required>
+                            <option value="">-- Sélectionner une activité --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="adresseEntreprise">Adresse</label>
+                        <input type="text" id="adresseEntreprise" placeholder="Rue de l'Innovation 10">
+                    </div>
+                    <div class="form-group">
+                        <label for="codePostalEntreprise">Code Postal</label>
+                        <input type="text" id="codePostalEntreprise" placeholder="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="communeEntreprise">Commune</label>
+                        <input type="text" id="communeEntreprise" placeholder="Bruxelles">
+                    </div>
+                    <button type="submit">✓ Créer Entreprise</button>
+                    <button type="reset" class="secondary">Effacer</button>
+                </form>
+            </div>
+
+            <!-- Formulaire Unités -->
+            <div class="card">
+                <h2>Créer une Unité d'établissement</h2>
+                <form id="formUnite">
+                    <div class="form-group">
+                        <label for="idUnite">ID Unité *</label>
+                        <input type="text" id="idUnite" required placeholder="UNIT001">
+                    </div>
+                    <div class="form-group">
+                        <label for="idEntrepriseUnite">ID Entreprise *</label>
+                        <select id="idEntrepriseUnite" required>
+                            <option value="">-- Sélectionner une entreprise --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="nomUnite">Nom Unité *</label>
+                        <input type="text" id="nomUnite" required placeholder="Siège social">
+                    </div>
+                    <div class="form-group">
+                        <label for="adresseUnite">Adresse</label>
+                        <input type="text" id="adresseUnite" placeholder="Rue Innovation 10">
+                    </div>
+                    <div class="form-group">
+                        <label for="codePostalUnite">Code Postal</label>
+                        <input type="text" id="codePostalUnite" placeholder="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="communeUnite">Commune</label>
+                        <input type="text" id="communeUnite" placeholder="Bruxelles">
+                    </div>
+                    <div class="form-group">
+                        <label for="typeUnite">Type Unité</label>
+                        <select id="typeUnite">
+                            <option value="siege">Siège</option>
+                            <option value="succursale">Succursale</option>
+                            <option value="depot">Dépôt</option>
+                        </select>
+                    </div>
+                    <button type="submit">✓ Créer Unité</button>
+                    <button type="reset" class="secondary">Effacer</button>
+                </form>
+            </div>
+
+            <!-- Liste Entreprises -->
+            <div class="card list-container">
+                <h2>Liste des Entreprises</h2>
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="entreprisesList">Toutes</button>
+                    <button class="tab-button" data-tab="entreprisesActives">Actives</button>
+                </div>
+                <div class="search-filter">
+                    <input type="text" id="searchList" placeholder="🔍 Rechercher une entreprise (ID, adresse, activité...)">
+                </div>
+                <div id="loadingEntreprises" class="loading">Chargement des entreprises...</div>
+                <div id="entreprisesList" class="tab-content active"></div>
+                <div id="entreprisesActives" class="tab-content"></div>
+            </div>
+
+            <!-- Détail Entreprise -->
+            <div class="card list-container">
+                <h2>Détails d'une Entreprise</h2>
+                <form id="formDetailEntreprise">
+                    <div class="form-group">
+                        <label for="searchEntreprise">Chercher par ID</label>
+                        <input type="text" id="searchEntreprise" placeholder="ENT001">
+                    </div>
+                    <button type="submit">🔍 Rechercher</button>
+                </form>
+                <div id="detailEntreprise" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour éditer une entreprise -->
+    <div id="modalEditEntreprise" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeModal('modalEditEntreprise')">&times;</button>
+                <h2>Modifier Entreprise</h2>
+            </div>
+            <form id="formEditEntreprise">
+                <input type="hidden" id="editEntrepriseId">
+                <div class="form-group">
+                    <label for="editNomEntreprise">Nom Entreprise</label>
+                    <input type="text" id="editNomEntreprise">
+                </div>
+                <div class="form-group">
+                    <label for="editAdresseEntreprise">Adresse</label>
+                    <input type="text" id="editAdresseEntreprise">
+                </div>
+                <div class="form-group">
+                    <label for="editCodePostalEntreprise">Code Postal</label>
+                    <input type="text" id="editCodePostalEntreprise">
+                </div>
+                <div class="form-group">
+                    <label for="editCommuneEntreprise">Commune</label>
+                    <input type="text" id="editCommuneEntreprise">
+                </div>
+                <div class="form-group">
+                    <label for="editStatutEntreprise">Statut</label>
+                    <select id="editStatutEntreprise">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="liquidée">Liquidée</option>
+                    </select>
+                </div>
+                <button type="submit">💾 Enregistrer</button>
+                <button type="button" class="secondary" onclick="closeModal('modalEditEntreprise')">Annuler</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        // Afficher une alerte
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${type}`;
+            alertDiv.textContent = message;
+            alertContainer.appendChild(alertDiv);
+
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        // Ouvrir/Fermer modal
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Charger les activités depuis la base de données
+        async function loadActivites() {
+            try {
+                const response = await fetch(`${API_URL}/activites`);
+                const data = await response.json();
+
+                const selectActivite = document.getElementById('idActivite');
+                selectActivite.innerHTML = '<option value="">-- Sélectionner une activité --</option>';
+                
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(act => {
+                        const option = document.createElement('option');
+                        option.value = act.id_activite;
+                        option.textContent = `${act.id_activite} - ${act.description || 'N/A'}`;
+                        selectActivite.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur chargement activités:', error);
+            }
+        }
+
+        // Charger les entreprises pour le dropdown des unités
+        async function loadEntreprisesDropdown() {
+            try {
+                const response = await fetch(`${API_URL}/entreprises-dropdown`);
+                const data = await response.json();
+
+                const selectEntreprise = document.getElementById('idEntrepriseUnite');
+                if (selectEntreprise) {
+                    selectEntreprise.innerHTML = '<option value="">-- Sélectionner une entreprise --</option>';
+                    
+                    if (data.data && data.data.length > 0) {
+                        data.data.forEach(ent => {
+                            const option = document.createElement('option');
+                            option.value = ent.id_entreprise;
+                            option.textContent = `${ent.id_entreprise} - ${ent.nom_entreprise}`;
+                            selectEntreprise.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur chargement entreprises dropdown:', error);
+            }
+        }
+
+        // Charger les statistiques
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const data = await response.json();
+                document.getElementById('totalEntreprises').textContent = data.entreprises.toLocaleString();
+                document.getElementById('totalUnites').textContent = data.unites.toLocaleString();
+            } catch (error) {
+                console.error('Erreur chargement stats:', error);
+            }
+        }
+
+        // Charger les entreprises
+        let allEntreprises = []; // Variable globale pour stocker toutes les entreprises
+
+        async function loadEntreprises() {
+            try {
+                document.getElementById('loadingEntreprises').classList.add('active');
+                const response = await fetch(`${API_URL}/entreprises`);
+                const data = await response.json();
+
+                allEntreprises = data.data || []; // Stocker les données
+                displayEntreprises(allEntreprises); // Afficher
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showAlert('Erreur lors du chargement', 'error');
+            } finally {
+                document.getElementById('loadingEntreprises').classList.remove('active');
+            }
+        }
+
+        // Fonction pour afficher les entreprises
+        function displayEntreprises(entreprises) {
+            const list = document.getElementById('entreprisesList');
+            const listActives = document.getElementById('entreprisesActives');
+            list.innerHTML = '';
+            listActives.innerHTML = '';
+
+            if (!entreprises || entreprises.length === 0) {
+                list.innerHTML = '<div class="empty-state">Aucune entreprise trouvée</div>';
+                listActives.innerHTML = '<div class="empty-state">Aucune entreprise active</div>';
+                return;
+            }
+
+            entreprises.forEach(ent => {
+                const isActive = ent.statut === 'AC' || ent.statut === 'active';
+                const itemHtml = `
+                    <div class="item">
+                        <h3>${ent.nom_entreprise}
+                            <span class="badge ${!isActive ? 'inactive' : ''}">${ent.statut}</span>
+                        </h3>
+                        <p><strong>ID:</strong> ${ent.id_entreprise}</p>
+                        <p><strong>Activité:</strong> ${ent.activite_description || 'N/A'}</p>
+                        <p><strong>Adresse:</strong> ${ent.adresse || 'N/A'} - ${ent.code_postal || ''} ${ent.commune || ''}</p>
+                        <p><strong>Unités:</strong> ${ent.nombre_unites || 0}</p>
+                        <div class="item-actions">
+                            <button onclick="editEntreprise('${ent.id_entreprise}')">✎ Modifier</button>
+                            <button class="danger" onclick="deleteEntreprise('${ent.id_entreprise}')">🗑 Supprimer</button>
+                        </div>
+                    </div>
+                `;
+
+                const itemEl = document.createElement('div');
+                itemEl.innerHTML = itemHtml;
+                list.appendChild(itemEl.firstElementChild);
+
+                if (isActive) {
+                    const activeItemEl = document.createElement('div');
+                    activeItemEl.innerHTML = itemHtml;
+                    listActives.appendChild(activeItemEl.firstElementChild);
+                }
+            });
+
+            // Mettre à jour la sélection des entreprises pour les unités
+            updateEntrepriseSelect(entreprises);
+        }
+
+        // Fonction de recherche dans la liste (interroge le serveur)
+        let searchTimeout;
+        document.getElementById('searchList').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.trim();
+            
+            // Debounce pour éviter trop de requêtes
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                if (!searchTerm) {
+                    loadEntreprises(); // Recharger les 100 premières
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_URL}/entreprises?search=${encodeURIComponent(searchTerm)}`);
+                    const data = await response.json();
+                    allEntreprises = data.data || [];
+                    displayEntreprises(allEntreprises);
+                } catch (error) {
+                    console.error('Erreur recherche:', error);
+                }
+            }, 300); // Attendre 300ms après la dernière frappe
+        });
+
+        // Mettre à jour la sélection des entreprises
+        function updateEntrepriseSelect(entreprises) {
+            const select = document.getElementById('idEntrepriseUnite');
+            select.innerHTML = '<option value="">-- Sélectionner une entreprise --</option>';
+            
+            entreprises.forEach(ent => {
+                const option = document.createElement('option');
+                option.value = ent.id_entreprise;
+                option.textContent = `${ent.id_entreprise} - ${ent.nom_entreprise}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Créer une entreprise
+        document.getElementById('formEntreprise').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                id_entreprise: document.getElementById('idEntreprise').value,
+                nom_entreprise: document.getElementById('nomEntreprise').value,
+                id_activite: document.getElementById('idActivite').value,
+                adresse: document.getElementById('adresseEntreprise').value,
+                code_postal: document.getElementById('codePostalEntreprise').value,
+                commune: document.getElementById('communeEntreprise').value,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/entreprises`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Entreprise créée avec succès !');
+                    document.getElementById('formEntreprise').reset();
+                    loadEntreprises();
+                } else {
+                    showAlert(result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur lors de la création', 'error');
+                console.error('Erreur:', error);
+            }
+        });
+
+        // Créer une unité
+        document.getElementById('formUnite').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const idEntreprise = document.getElementById('idEntrepriseUnite').value;
+            const data = {
+                id_unite: document.getElementById('idUnite').value,
+                numero_unite: 1,
+                nom_unite: document.getElementById('nomUnite').value,
+                adresse: document.getElementById('adresseUnite').value,
+                code_postal: document.getElementById('codePostalUnite').value,
+                commune: document.getElementById('communeUnite').value,
+                type_unite: document.getElementById('typeUnite').value,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/entreprises/${idEntreprise}/unites`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Unité créée avec succès !');
+                    document.getElementById('formUnite').reset();
+                    loadEntreprises();
+                } else {
+                    showAlert(result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur lors de la création', 'error');
+                console.error('Erreur:', error);
+            }
+        });
+
+        // Rechercher une entreprise
+        document.getElementById('formDetailEntreprise').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('searchEntreprise').value;
+
+            try {
+                const response = await fetch(`${API_URL}/entreprises/${id}`);
+                const result = await response.json();
+
+                const detailDiv = document.getElementById('detailEntreprise');
+
+                if (result.success === false) {
+                    detailDiv.innerHTML = '<div class="empty-state">Entreprise non trouvée</div>';
+                    return;
+                }
+
+                const data = result.data; // Extraire les données de l'objet result
+
+                let html = `
+                    <div class="item">
+                        <h3>${data.nom_entreprise}</h3>
+                        <p><strong>ID:</strong> ${data.id_entreprise}</p>
+                        <p><strong>Activité:</strong> ${data.activite_description || 'N/A'}</p>
+                        <p><strong>Adresse:</strong> ${data.adresse || 'N/A'}</p>
+                        <p><strong>Code Postal:</strong> ${data.code_postal || 'N/A'}</p>
+                        <p><strong>Commune:</strong> ${data.commune || 'N/A'}</p>
+                        <p><strong>Statut:</strong> <span class="badge">${data.statut}</span></p>
+                        <p><strong>Créé:</strong> ${new Date(data.created_at).toLocaleDateString('fr-FR')}</p>
+                        
+                        <h4 style="margin-top: 15px; margin-bottom: 10px;">Unités d'établissement (${(data.unites_etablissement || []).length})</h4>
+                `;
+
+                if (data.unites_etablissement && data.unites_etablissement.length > 0) {
+                    data.unites_etablissement.forEach(unite => {
+                        html += `
+                            <div style="background: white; padding: 10px; margin-bottom: 10px; border-left: 3px solid #764ba2;">
+                                <p><strong>${unite.nom_unite}</strong> <span class="badge">${unite.type_unite}</span></p>
+                                <p><small>${unite.adresse} - ${unite.code_postal} ${unite.commune}</small></p>
+                                <button style="width: auto; padding: 5px 10px; font-size: 12px;" onclick="deleteUnite('${unite.id_unite}')">Supprimer</button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<p style="color: #999;">Aucune unité</p>';
+                }
+
+                html += `
+                        <div class="item-actions" style="margin-top: 15px;">
+                            <button onclick="editEntreprise('${data.id_entreprise}')">✎ Modifier</button>
+                            <button class="danger" onclick="deleteEntreprise('${data.id_entreprise}')">🗑 Supprimer</button>
+                        </div>
+                    </div>
+                `;
+
+                detailDiv.innerHTML = html;
+            } catch (error) {
+                showAlert('Erreur lors de la recherche', 'error');
+                console.error('Erreur:', error);
+            }
+        });
+
+        // Éditer une entreprise
+        async function editEntreprise(id) {
+            try {
+                const response = await fetch(`${API_URL}/entreprises/${id}`);
+                const data = await response.json();
+
+                document.getElementById('editEntrepriseId').value = id;
+                document.getElementById('editNomEntreprise').value = data.nom_entreprise || '';
+                document.getElementById('editAdresseEntreprise').value = data.adresse || '';
+                document.getElementById('editCodePostalEntreprise').value = data.code_postal || '';
+                document.getElementById('editCommuneEntreprise').value = data.commune || '';
+                document.getElementById('editStatutEntreprise').value = data.statut || 'active';
+
+                openModal('modalEditEntreprise');
+            } catch (error) {
+                showAlert('Erreur lors du chargement', 'error');
+            }
+        }
+
+        // Enregistrer les modifications
+        document.getElementById('formEditEntreprise').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('editEntrepriseId').value;
+            const data = {
+                nom_entreprise: document.getElementById('editNomEntreprise').value,
+                adresse: document.getElementById('editAdresseEntreprise').value,
+                code_postal: document.getElementById('editCodePostalEntreprise').value,
+                commune: document.getElementById('editCommuneEntreprise').value,
+                statut: document.getElementById('editStatutEntreprise').value,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/entreprises/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Entreprise mise à jour avec succès !');
+                    closeModal('modalEditEntreprise');
+                    loadEntreprises();
+                } else {
+                    showAlert(result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur lors de la mise à jour', 'error');
+            }
+        });
+
+        // Supprimer une entreprise
+        async function deleteEntreprise(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette entreprise et ses unités ?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/entreprises/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Entreprise supprimée avec succès !');
+                    loadEntreprises();
+                    document.getElementById('detailEntreprise').innerHTML = '';
+                } else {
+                    showAlert(result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur lors de la suppression', 'error');
+            }
+        }
+
+        // Supprimer une unité
+        async function deleteUnite(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette unité ?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/entreprises/unites/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Unité supprimée avec succès !');
+                    location.reload();
+                } else {
+                    showAlert(result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erreur lors de la suppression', 'error');
+            }
+        }
+
+        // Gérer les onglets
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                btn.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Vérifier l'API et charger les données
+        async function initApp() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'OK') {
+                    document.getElementById('apiStatus').textContent = '✓';
+                    loadStats();
+                    loadActivites();
+                    loadEntreprisesDropdown();
+                    loadEntreprises();
+                } else {
+                    document.getElementById('apiStatus').textContent = '✗';
+                    showAlert('API non disponible', 'error');
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').textContent = '✗';
+                showAlert('Impossible de se connecter à l\'API. Vérifiez que le serveur est démarré sur http://localhost:3000', 'error');
+            }
+        }
+
+        // Démarrer l'application
+        initApp();
+
+        // Rafraîchir les données toutes les 30 secondes
+        setInterval(loadEntreprises, 30000);
+    </script>
+</body>
+</html>
