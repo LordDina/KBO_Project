@@ -12,9 +12,8 @@ class EntrepriseService {
 
   static createEntreprise(entrepriseData) {
     return new Promise((resolve, reject) => {
-      const { id_entreprise, nom_entreprise, id_activite, adresse, code_postal, commune } = entrepriseData;
+      const { id_entreprise, nom_entreprise, id_activite, adresse, code_postal, commune, contact } = entrepriseData;
 
-      // Valider que l'activité existe
       db.get(
         'SELECT * FROM activites WHERE id_activite = ?',
         [id_activite],
@@ -24,13 +23,13 @@ class EntrepriseService {
 
           const sql = `
             INSERT INTO entreprises 
-            (id_entreprise, nom_entreprise, id_activite, adresse, code_postal, commune)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (id_entreprise, nom_entreprise, id_activite, adresse, code_postal, commune, contact)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
           `;
 
           db.run(
             sql,
-            [id_entreprise, nom_entreprise, id_activite, adresse, code_postal, commune],
+            [id_entreprise, nom_entreprise, id_activite, adresse, code_postal, commune, contact],
             function(err) {
               if (err) return reject(err);
               resolve({ id_entreprise, nom_entreprise, id_activite });
@@ -72,6 +71,11 @@ class EntrepriseService {
 
   static getAllEntreprises(filters = {}) {
     return new Promise((resolve, reject) => {
+      const page = parseInt(filters.page) || 1;
+      const limit = parseInt(filters.limit) || 20;
+      const offset = (page - 1) * limit;
+
+      let countSql = 'SELECT COUNT(*) as total FROM entreprises e WHERE 1=1';
       let sql = `
         SELECT e.*, a.description as activite_description
         FROM entreprises e
@@ -79,34 +83,57 @@ class EntrepriseService {
         WHERE 1=1
       `;
       const params = [];
+      const countParams = [];
 
       if (filters.search) {
         sql += ' AND (e.nom_entreprise LIKE ? OR e.id_entreprise LIKE ?)';
+        countSql += ' AND (e.nom_entreprise LIKE ? OR e.id_entreprise LIKE ?)';
         params.push(`%${filters.search}%`, `%${filters.search}%`);
+        countParams.push(`%${filters.search}%`, `%${filters.search}%`);
       }
 
       if (filters.statut) {
         sql += ' AND e.statut = ?';
+        countSql += ' AND e.statut = ?';
         params.push(filters.statut);
+        countParams.push(filters.statut);
       }
 
       if (filters.id_activite) {
         sql += ' AND e.id_activite = ?';
+        countSql += ' AND e.id_activite = ?';
         params.push(filters.id_activite);
+        countParams.push(filters.id_activite);
       }
 
-      sql += ' ORDER BY e.nom_entreprise LIMIT 100';
+      sql += ' ORDER BY e.nom_entreprise LIMIT ? OFFSET ?';
+      params.push(limit, offset);
 
-      db.all(sql, params, (err, rows) => {
+      db.get(countSql, countParams, (err, countRow) => {
         if (err) return reject(err);
-        resolve(rows || []);
+        
+        const total = countRow ? countRow.total : 0;
+        const totalPages = Math.ceil(total / limit);
+
+        db.all(sql, params, (err, rows) => {
+          if (err) return reject(err);
+          resolve({
+            data: rows || [],
+            pagination: {
+              page,
+              limit,
+              total,
+              totalPages
+            }
+          });
+        });
       });
     });
   }
 
   static updateEntreprise(id_entreprise, updateData) {
     return new Promise((resolve, reject) => {
-      const { nom_entreprise, id_activite, adresse, code_postal, commune, statut } = updateData;
+      const { nom_entreprise, id_activite, adresse, code_postal, commune, statut, contact } = updateData;
 
       // Vérifier que l'entreprise existe
       db.get(
@@ -158,6 +185,10 @@ class EntrepriseService {
             if (statut !== undefined) {
               updates.push('statut = ?');
               values.push(statut);
+            }
+            if (contact !== undefined) {
+              updates.push('contact = ?');
+              values.push(contact);
             }
 
             updates.push('updated_at = CURRENT_TIMESTAMP');

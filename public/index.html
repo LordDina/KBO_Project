@@ -298,6 +298,45 @@
             opacity: 0.5;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 15px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #5a6fd6;
+        }
+
+        .pagination button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background: #4c51bf;
+            font-weight: bold;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -450,6 +489,10 @@
                         <label for="communeEntreprise">Commune</label>
                         <input type="text" id="communeEntreprise" placeholder="Bruxelles">
                     </div>
+                    <div class="form-group">
+                        <label for="contactEntreprise">Contact (email/tél)</label>
+                        <input type="text" id="contactEntreprise" placeholder="info@exemple.be ou +32 2 123 45 67">
+                    </div>
                     <button type="submit">✓ Créer Entreprise</button>
                     <button type="reset" class="secondary">Effacer</button>
                 </form>
@@ -511,6 +554,7 @@
                 <div id="loadingEntreprises" class="loading">Chargement des entreprises...</div>
                 <div id="entreprisesList" class="tab-content active"></div>
                 <div id="entreprisesActives" class="tab-content"></div>
+                <div id="pagination" class="pagination"></div>
             </div>
 
             <!-- Détail Entreprise -->
@@ -552,6 +596,10 @@
                 <div class="form-group">
                     <label for="editCommuneEntreprise">Commune</label>
                     <input type="text" id="editCommuneEntreprise">
+                </div>
+                <div class="form-group">
+                    <label for="editContactEntreprise">Contact (email/tél)</label>
+                    <input type="text" id="editContactEntreprise">
                 </div>
                 <div class="form-group">
                     <label for="editStatutEntreprise">Statut</label>
@@ -649,16 +697,27 @@
         }
 
         // Charger les entreprises
-        let allEntreprises = []; // Variable globale pour stocker toutes les entreprises
+        let allEntreprises = [];
+        let currentPage = 1;
+        let currentSearch = '';
 
-        async function loadEntreprises() {
+        async function loadEntreprises(page = 1, search = '') {
             try {
                 document.getElementById('loadingEntreprises').classList.add('active');
-                const response = await fetch(`${API_URL}/entreprises`);
+                currentPage = page;
+                currentSearch = search;
+                
+                let url = `${API_URL}/entreprises?page=${page}&limit=20`;
+                if (search) {
+                    url += `&search=${encodeURIComponent(search)}`;
+                }
+                
+                const response = await fetch(url);
                 const data = await response.json();
 
-                allEntreprises = data.data || []; // Stocker les données
-                displayEntreprises(allEntreprises); // Afficher
+                allEntreprises = data.data || [];
+                displayEntreprises(allEntreprises);
+                displayPagination(data.pagination);
 
             } catch (error) {
                 console.error('Erreur:', error);
@@ -666,6 +725,42 @@
             } finally {
                 document.getElementById('loadingEntreprises').classList.remove('active');
             }
+        }
+
+        function displayPagination(pagination) {
+            const container = document.getElementById('pagination');
+            if (!pagination || pagination.totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const { page, totalPages, total } = pagination;
+            let html = `<span class="pagination-info">${total.toLocaleString()} résultats</span>`;
+            
+            html += `<button onclick="loadEntreprises(1, currentSearch)" ${page === 1 ? 'disabled' : ''}>«</button>`;
+            html += `<button onclick="loadEntreprises(${page - 1}, currentSearch)" ${page === 1 ? 'disabled' : ''}>‹</button>`;
+            
+            let startPage = Math.max(1, page - 2);
+            let endPage = Math.min(totalPages, page + 2);
+            
+            if (startPage > 1) {
+                html += `<button onclick="loadEntreprises(1, currentSearch)">1</button>`;
+                if (startPage > 2) html += `<span>...</span>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="loadEntreprises(${i}, currentSearch)" class="${i === page ? 'active' : ''}">${i}</button>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span>...</span>`;
+                html += `<button onclick="loadEntreprises(${totalPages}, currentSearch)">${totalPages}</button>`;
+            }
+            
+            html += `<button onclick="loadEntreprises(${page + 1}, currentSearch)" ${page === totalPages ? 'disabled' : ''}>›</button>`;
+            html += `<button onclick="loadEntreprises(${totalPages}, currentSearch)" ${page === totalPages ? 'disabled' : ''}>»</button>`;
+            
+            container.innerHTML = html;
         }
 
         // Fonction pour afficher les entreprises
@@ -691,7 +786,7 @@
                         <p><strong>ID:</strong> ${ent.id_entreprise}</p>
                         <p><strong>Activité:</strong> ${ent.activite_description || 'N/A'}</p>
                         <p><strong>Adresse:</strong> ${ent.adresse || 'N/A'} - ${ent.code_postal || ''} ${ent.commune || ''}</p>
-                        <p><strong>Unités:</strong> ${ent.nombre_unites || 0}</p>
+                        <p><strong>Contact:</strong> ${ent.contact || 'N/A'}</p>
                         <div class="item-actions">
                             <button onclick="editEntreprise('${ent.id_entreprise}')">✎ Modifier</button>
                             <button class="danger" onclick="deleteEntreprise('${ent.id_entreprise}')">🗑 Supprimer</button>
@@ -719,23 +814,10 @@
         document.getElementById('searchList').addEventListener('input', (e) => {
             const searchTerm = e.target.value.trim();
             
-            // Debounce pour éviter trop de requêtes
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(async () => {
-                if (!searchTerm) {
-                    loadEntreprises(); // Recharger les 100 premières
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`${API_URL}/entreprises?search=${encodeURIComponent(searchTerm)}`);
-                    const data = await response.json();
-                    allEntreprises = data.data || [];
-                    displayEntreprises(allEntreprises);
-                } catch (error) {
-                    console.error('Erreur recherche:', error);
-                }
-            }, 300); // Attendre 300ms après la dernière frappe
+            searchTimeout = setTimeout(() => {
+                loadEntreprises(1, searchTerm);
+            }, 300);
         });
 
         // Mettre à jour la sélection des entreprises
@@ -762,6 +844,7 @@
                 adresse: document.getElementById('adresseEntreprise').value,
                 code_postal: document.getElementById('codePostalEntreprise').value,
                 commune: document.getElementById('communeEntreprise').value,
+                contact: document.getElementById('contactEntreprise').value,
             };
 
             try {
@@ -777,6 +860,7 @@
                     showAlert('Entreprise créée avec succès !');
                     document.getElementById('formEntreprise').reset();
                     loadEntreprises();
+                    loadStats();
                 } else {
                     showAlert(result.error, 'error');
                 }
@@ -814,6 +898,7 @@
                     showAlert('Unité créée avec succès !');
                     document.getElementById('formUnite').reset();
                     loadEntreprises();
+                    loadStats();
                 } else {
                     showAlert(result.error, 'error');
                 }
@@ -850,6 +935,7 @@
                         <p><strong>Adresse:</strong> ${data.adresse || 'N/A'}</p>
                         <p><strong>Code Postal:</strong> ${data.code_postal || 'N/A'}</p>
                         <p><strong>Commune:</strong> ${data.commune || 'N/A'}</p>
+                        <p><strong>Contact:</strong> ${data.contact || 'N/A'}</p>
                         <p><strong>Statut:</strong> <span class="badge">${data.statut}</span></p>
                         <p><strong>Créé:</strong> ${new Date(data.created_at).toLocaleDateString('fr-FR')}</p>
                         
@@ -896,6 +982,7 @@
                 document.getElementById('editAdresseEntreprise').value = data.adresse || '';
                 document.getElementById('editCodePostalEntreprise').value = data.code_postal || '';
                 document.getElementById('editCommuneEntreprise').value = data.commune || '';
+                document.getElementById('editContactEntreprise').value = data.contact || '';
                 document.getElementById('editStatutEntreprise').value = data.statut || 'active';
 
                 openModal('modalEditEntreprise');
@@ -914,6 +1001,7 @@
                 adresse: document.getElementById('editAdresseEntreprise').value,
                 code_postal: document.getElementById('editCodePostalEntreprise').value,
                 commune: document.getElementById('editCommuneEntreprise').value,
+                contact: document.getElementById('editContactEntreprise').value,
                 statut: document.getElementById('editStatutEntreprise').value,
             };
 
@@ -952,6 +1040,7 @@
                 if (result.success) {
                     showAlert('Entreprise supprimée avec succès !');
                     loadEntreprises();
+                    loadStats();
                     document.getElementById('detailEntreprise').innerHTML = '';
                 } else {
                     showAlert(result.error, 'error');
@@ -974,7 +1063,8 @@
 
                 if (result.success) {
                     showAlert('Unité supprimée avec succès !');
-                    location.reload();
+                    loadEntreprises();
+                    loadStats();
                 } else {
                     showAlert(result.error, 'error');
                 }
