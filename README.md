@@ -22,6 +22,11 @@ Cette application permet de gérer des entreprises belges et leurs unités d'ét
 - ✓ **Suppression** en cascade avec effacement automatique des succursales
 - ✓ Gestion complète des unités d'établissement (CRUD)
 - ✓ API REST bien structurée avec gestion d'erreurs
+- ✓ **Pagination** des entreprises (20 par page)
+- ✓ **Recherche** en temps réel avec debounce
+- ✓ **Contacts** (email/téléphone) importés depuis les données KBO
+- ✓ **Compteurs** mis à jour en temps réel après création/suppression
+- ✓ **Documentation Swagger** interactive à /api-docs
 
 ---
 
@@ -51,6 +56,7 @@ Cette application permet de gérer des entreprises belges et leurs unités d'ét
 │ code_postal           TEXT            │
 │ commune               TEXT            │
 │ pays                  TEXT            │
+│ contact               TEXT            │
 │ date_creation         DATE            │
 │ statut                TEXT            │
 │ created_at            DATETIME        │
@@ -93,13 +99,14 @@ Contient les informations principales des entreprises.
 
 | Colonne | Type | Contraintes | Description |
 |---------|------|-------------|-------------|
-| id_entreprise | TEXT | PRIMARY KEY | Identifiant unique (ex: 'ENT001') |
+| id_entreprise | TEXT | PRIMARY KEY | Identifiant unique (ex: '0123.456.789') |
 | nom_entreprise | TEXT | NOT NULL | Nom commercial |
 | id_activite | TEXT | FOREIGN KEY | Code d'activité principal |
 | adresse | TEXT | | Adresse du siège |
 | code_postal | TEXT | | Code postal |
 | commune | TEXT | | Commune du siège |
 | pays | TEXT | DEFAULT 'Belgique' | Pays |
+| contact | TEXT | | Email et/ou téléphone |
 | date_creation | DATE | | Date de création |
 | statut | TEXT | DEFAULT 'active' | active/inactive/liquidée |
 | created_at | DATETIME | AUTO | Timestamp de création |
