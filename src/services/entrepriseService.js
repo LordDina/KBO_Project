@@ -86,10 +86,21 @@ class EntrepriseService {
       const countParams = [];
 
       if (filters.search) {
-        sql += ' AND (e.nom_entreprise LIKE ? OR e.id_entreprise LIKE ?)';
-        countSql += ' AND (e.nom_entreprise LIKE ? OR e.id_entreprise LIKE ?)';
-        params.push(`%${filters.search}%`, `%${filters.search}%`);
-        countParams.push(`%${filters.search}%`, `%${filters.search}%`);
+        const search = filters.search;
+        // Recherche au début du nom (utilise l'index) ou correspondance exacte pour ID
+        if (/^\d/.test(search)) {
+          // Si commence par un chiffre, chercher dans l'ID
+          sql += ' AND e.id_entreprise LIKE ?';
+          countSql += ' AND e.id_entreprise LIKE ?';
+          params.push(`${search}%`);
+          countParams.push(`${search}%`);
+        } else {
+          // Sinon chercher au début du nom (plus rapide avec index)
+          sql += ' AND e.nom_entreprise LIKE ?';
+          countSql += ' AND e.nom_entreprise LIKE ?';
+          params.push(`${search}%`);
+          countParams.push(`${search}%`);
+        }
       }
 
       if (filters.statut) {

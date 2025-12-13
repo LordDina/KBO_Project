@@ -811,13 +811,25 @@
 
         // Fonction de recherche dans la liste (interroge le serveur)
         let searchTimeout;
-        document.getElementById('searchList').addEventListener('input', (e) => {
+        const searchInput = document.getElementById('searchList');
+        
+        searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.trim();
             
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                loadEntreprises(1, searchTerm);
-            }, 300);
+            
+            // Si le champ est vide, recharger toutes les entreprises
+            if (searchTerm === '') {
+                loadEntreprises(1, '');
+                return;
+            }
+            
+            // Recherche rapide dès 1 caractère avec délai court
+            if (searchTerm.length >= 1) {
+                searchTimeout = setTimeout(() => {
+                    loadEntreprises(1, searchTerm);
+                }, 150);
+            }
         });
 
         // Mettre à jour la sélection des entreprises
